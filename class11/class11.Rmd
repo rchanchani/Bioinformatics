@@ -1,0 +1,99 @@
+---
+title: "Structural Bioinformatics"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## PDB Database Composition Statistics
+
+Download PDB statistics data as CSV file from: http://www.rcsb.org/stats/summary
+
+```{r load, echo=TRUE}
+pdbstats <- read.csv("Data Export Summary.csv", row.names = 1)
+```
+
+Looking at the table and adding the percent of structres solved by each method...
+```{r table, echo=TRUE}
+nstr <- sum(pdbstats$Total)
+percent <- round((pdbstats$Total / nstr) * 100, 2)
+pdbstats$Percent <- percent
+library(knitr)
+kable(pdbstats)
+```
+
+`r percent[1]`% of structures are solved by X-ray crystallography and `r percent[3]`% by electron microscopy.
+
+```{r protein.pct, echo=FALSE}
+prot_pct <- round((sum(pdbstats$Proteins) / nstr) * 100, 2)
+```
+
+The proportion of protein entries: `r prot_pct`%
+
+## Introduction to Bio3D
+```{r}
+library(bio3d)
+```
+```{r}
+pdb <- read.pdb("1hsg")
+pdb
+attributes(pdb)
+```
+Note: "attributes()" can be used with any r object.
+
+There are 198 amino acid residues and the two non-protein residues are water and the MK1 compound.
+The pdb file stores the atom as a dataframe object.
+
+Print a summary of the coordinate data in $xyz
+```{r}
+pdb$xyz
+```
+Examine the row and column dimensions
+```{r}
+dim(pdb$xyz)
+```
+Print coordinates for the first two atom
+```{r}
+pdb$xyz[ 1, atom2xyz(1:2) ]
+```
+Select all C-alpha atoms (return their indices)
+```{r}
+ca.inds <- atom.select(pdb, "calpha")
+ca.inds
+```
+Make new pdb files here.
+
+
+## Aligning Multiple Structures
+
+Download some example PDB files(
+```{r}
+ids <- c("1TND_B","1AGR_A","1TAG_A","1GG2_A","1KJY_A","4G5Q_A")
+files <- get.pdb(ids, split = TRUE)
+```
+
+Extract and align the chains we are interested in.
+```{r}
+pdbs <- pdbaln(files, fit = TRUE)
+pdbs
+```
+
+PCA of these structures
+```{r}
+# find invariant core
+core <- core.find(pdbs)
+# superimpose all structures to core
+pdbs$xyz = pdbfit(pdbs, core)
+# Perform PCA
+pc.xray <- pca(pdbs)
+```
+```{r}
+# Calculate RMSD
+rd <- rmsd(pdbs)
+# Structure-based clustering
+hc.rd <- hclust(dist(rd))
+grps.rd <- cutree(hc.rd, k=3)
+plot(pc.xray, 1:2, col="grey50", bg=grps.rd, pch=21, cex=1)
+```
