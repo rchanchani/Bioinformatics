@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Splitting up PDB files into proteins and ligands
 
 We will first download and read in the 1hsg protein from PDB.
-```{r}
+```{r read, warning=FALSE}
 library(bio3d)
 prot <- get.pdb("1hsg")
 ```

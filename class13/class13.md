@@ -16,8 +16,6 @@ library(bio3d)
 prot <- get.pdb("1hsg")
 ```
 
-    ## Warning in get.pdb("1hsg"): ./1hsg.pdb exists. Skipping download
-
 Then, we will read in the strucutre of the protein and the ligand bound to it, and split up these two components into separate files to attempt docking of ligands into the protein. This is done after removing the water molecules in the structure.
 
 ``` r
