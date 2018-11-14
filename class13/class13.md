@@ -53,3 +53,33 @@ We see that the RMSD values do not always correspond to the energy affinity of t
 res <- read.pdb("all.pdbqt", multi=TRUE)
 write.pdb(res, "results.pdb")
 ```
+
+Normal Mode Analysis
+--------------------
+
+Read in the hen egg white lysozome and perform Normal Mode Analysis.
+
+``` r
+pdb <- read.pdb("1HEL")
+```
+
+    ##   Note: Accessing on-line PDB file
+
+``` r
+modes <- nma(pdb)
+```
+
+    ##  Building Hessian...     Done in 0.017 seconds.
+    ##  Diagonalizing Hessian...    Done in 0.079 seconds.
+
+``` r
+plot(modes, sse=pdb)
+```
+
+![](class13_files/figure-markdown_github/unnamed-chunk-5-1.png) Visualize the normal mode analysis results shown in the figure above.
+
+``` r
+mktrj(modes, mode=7, file="nma_7.pdb")
+```
+
+![](proteinConf.gif)

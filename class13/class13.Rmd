@@ -52,3 +52,17 @@ The values left to right of RMSD output are in order of energy preference and in
 res <- read.pdb("all.pdbqt", multi=TRUE)
 write.pdb(res, "results.pdb")
 ```
+
+## Normal Mode Analysis
+
+Read in the hen egg white lysozome and perform Normal Mode Analysis.
+```{r}
+pdb <- read.pdb("1HEL")
+modes <- nma(pdb)
+plot(modes, sse=pdb)
+```
+Visualize the normal mode analysis results shown in the figure above.
+```{r}
+mktrj(modes, mode=7, file="nma_7.pdb")
+```
+![](proteinConf.gif)
