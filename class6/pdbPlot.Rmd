@@ -2,8 +2,7 @@
 title: "pdbPlot"
 author: "Raghav Chanchani"
 date: "10/24/2018"
-output:
-  html_document: default
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
