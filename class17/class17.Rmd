@@ -1,0 +1,109 @@
+---
+title: "Cancer Genomics and Immunoinformatics"
+author: "Raghav Chanchani"
+date: "11/29/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Accessing Data
+Load somatic variants for a representative TCGA dataset, in this case pancreatic adenocarcinoma. Load maftools to provide rich summaries of the data.
+```{r message=FALSE}
+library(GenomicDataCommons)
+library(maftools)
+```
+Check the dataset status to make sure data retrieval is working.
+```{r}
+GenomicDataCommons::status()
+```
+## Querying the GDC
+
+The facet() and aggregations() functions here are from the GenomicDataCommons package and act to group all cases by the project id and then count them up.
+```{r}
+cases_by_project <- cases() %>%
+  facet("project.project_id") %>%
+  aggregations()
+head(cases_by_project)
+```
+The number of cases for each type of cancer.
+```{r}
+x <- cases_by_project$project.project_id
+# Make a custom color vector for our plot
+colvec <- rep("lightblue", nrow(x))
+colvec[x$key == "TCGA-PAAD"] <- "red"
+
+# Plot with 'log' for y axis and rotate labels with 'las'
+par(mar=c(9, 4, 4, 2) + 0.1)  
+barplot(x$doc_count, names.arg=x$key, log="y", col=colvec, las=2)
+```
+
+Find all gene expression data files for all pancreatic cancer patients.
+```{r message=FALSE, warning=FALSE}
+file_records <- files() %>%
+  filter(~ cases.project.project_id == "TCGA-PAAD" &
+    data_type == "Gene Expression Quantification" &
+    analysis.workflow_type == "HTSeq - Counts") %>%
+  response_all()
+
+#View(file_records)
+nrow(file_records$results)
+head(file_records$results)
+```
+
+## Variant Analysis
+
+Go to the NCI-GDC web portal and enter the Advanced Search page and then construct a search query to find MAF format somatic mutation files for our ‘TCGA-PAAD’ project. Query: "cases.project.project_id in ["TCGA-PAAD"] and files.data_type in ["Masked Somatic Mutation"] and files.data_format in ["MAF"]".
+This is how this process can be streamlined with R, avoiding the trial-and-error of coming up with the query.
+```{r}
+maf.files = files() %>%
+    filter(~ cases.project.project_id == 'TCGA-PAAD' &
+        data_type == 'Masked Somatic Mutation' &
+        data_format == "MAF" &
+        analysis.workflow_type == "MuTect2 Variant Aggregation and Masking"
+    ) %>%
+    response_all()
+attributes(maf.files)
+head(maf.files$results)
+```
+
+Use the **ids()** function to find the unique identifiers in the MAF file.
+```{r}
+uid <- ids(maf.files)
+uid
+```
+The **gdcdata()** function downloads the associated files to a cache directory on the computer and returns a file-name for each identifier.
+```{r message=FALSE}
+#maffile = gdcdata(uid, destination_dir =".")
+maffile = gdcdata(uid)
+maffile
+```
+The MAF file is now stored locally and the maftools package workflow, which starts with a MAF file, can proceed, starting with reading the pancreatic cancer MAF file.
+```{r message=FALSE}
+vars = read.maf(maf = maffile, verbose = FALSE)
+```
+
+## Plotting the MAF Summary
+We can use plotmafSummary() function to plot a summary of the maf object, which displays number of variants in each sample as a stacked barplot and variant types as a boxplot summarized by Variant_Classification. We can add either mean or median line to the stacked barplot to display average/median number of variants across the cohort.
+```{r}
+plotmafSummary(maf =vars, rmOutlier = TRUE,
+               addStat = 'median', dashboard = TRUE,
+               titvRaw = FALSE)
+```
+## Drawing Oncoplots
+The waterfall plot is a useful way to visualize the types of mutations and their frequency in the cases of pancreatic cancer. Here we create an oncoplot for the top 10 most frequently mutated genes. Open XQuartz!
+```{r message=FALSE, warning=FALSE}
+oncoplot(maf = vars, top = 10, fontSize = 12)
+dev.off()
+```
+
+## Oncostrip and Lolipop Plots
+We can visualize any set of genes using the **oncostrip()** function, which draws mutations in each sample similar to the graphic on the NCI-GDC web portal. Note that oncostrip() can be used to draw any number of genes using the input top or genes arguments. We look at KRAS and TP53 genes because they appear to be significant locations of mutations.
+```{r}
+oncostrip(maf=vars, genes=c("KRAS", "TP53"))
+lollipopPlot(maf = vars, gene = 'KRAS', 
+                         showMutationRate = TRUE, domainLabelSize = 3)
+lollipopPlot(maf = vars, gene = 'TP53')
+```

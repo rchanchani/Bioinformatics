@@ -1,0 +1,176 @@
+---
+title: "Pathway Analysis from RNA-Seq Results"
+author: "Raghav Chanchani"
+date: "11/27/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Differential Expression Analysis
+```{r message=FALSE, warning=FALSE}
+library(DESeq2)
+```
+```{r}
+metaFile <- "data/GSE37704_metadata.csv"
+countFile <- "data/GSE37704_featurecounts.csv"
+
+# Import metadata and take a peak
+colData = read.csv(metaFile, row.names=1)
+head(colData)
+
+# Import countdata
+countData = read.csv(countFile, row.names=1)
+head(countData)
+```
+```{r}
+# Note we need to remove the odd first $length col
+countData <- as.matrix(countData[,-1])
+
+# Filter count data where you have 0 read count across all samples.
+countData <- countData[rowSums(countData)!=0,]
+head(countData)
+```
+There are `r nrow(countData)` genes in the dataset. 
+```{r}
+dds = DESeqDataSetFromMatrix(countData=countData,
+                             colData=colData,
+                             design=~condition)
+dds = DESeq(dds)
+```
+Getting the results...
+```{r}
+res = results(dds, contrast=c("condition", "hoxa1_kd", "control_sirna"))
+```
+```{r}
+summary(res, alpha=0.05)
+```
+Plot of fold-change versus p-value.
+```{r}
+# Make a color vector for all genes
+mycols <- rep("gray", nrow(res) )
+
+# Color red the genes with absolute fold change above 2
+mycols[ abs(res$log2FoldChange) > 2 ] <- "red"
+
+# Color blue those with adjusted p-value less than 0.01
+#  and absolute fold change more than 2
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2 )
+mycols[ inds ] <- "blue"
+plot( res$log2FoldChange, -log(res$padj), col=mycols, xlab="Log2(FoldChange)", ylab="-Log(P-value)" )
+```
+
+## Adding Gene Annotations
+Add SYMBOL, ENTREZID, GENENAME annotations to the results to facilitate easy determination of gene pathways.
+```{r}
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+
+columns(org.Hs.eg.db)
+
+# keys refers to what is in the results file that matches ENSEMBL file
+res$symbol = mapIds(org.Hs.eg.db,
+                    keys=row.names(res), 
+                    keytype="ENSEMBL",
+                    column="SYMBOL",
+                    multiVals="first")
+
+res$entrez = mapIds(org.Hs.eg.db,
+                    keys=row.names(res),
+                    keytype="ENSEMBL",
+                    column="ENTREZID",
+                    multiVals="first")
+
+res$name =   mapIds(org.Hs.eg.db,
+                    keys=row.names(res),
+                    keytype="ENSEMBL",
+                    column="GENENAME",
+                    multiVals="first")
+
+head(res, 10)
+```
+
+Write out results.
+```{r}
+res = res[order(res$pvalue),]
+write.csv(res, file="deseq_results.csv")
+```
+
+## Pathway Analysis
+
+### KEGG Pathways
+```{r}
+library(pathview)
+library(gage)
+library(gageData)
+```
+Load KEGG data.
+```{r}
+data(kegg.sets.hs)
+data(sigmet.idx.hs)
+```
+
+Focus on signaling and metabolic pathways only and examine the first three pathways.
+```{r}
+kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
+head(kegg.sets.hs, 3)
+```
+
+Do these data overlap with the annotated data from before? The hsaxxxxx number is a pathway identifer. The **gage()** function needs a named vector of fold changes, where the names of the values are the Entrez gene IDs. Note that we used the mapIDs() function above to obtain entrez gene IDs (stored in **res$entrez**) and we have the fold change results from DESeq2 analysis (stored in **res$logFoldChange** ).
+
+Set up the input vector for **gage()**.
+```{r}
+foldchanges = res$log2FoldChange
+names(foldchanges) = res$entrez
+head(foldchanges)
+```
+Run **gage()**.
+```{r}
+keggres = gage(foldchanges, gsets=kegg.sets.hs)
+```
+Upregulated expression
+```{r}
+head(keggres$greater)
+```
+
+Downregulated expression
+```{r}
+head(keggres$less)
+```
+
+Looking at these results for one geneset in relation to the top five pathways.
+```{r}
+keggrespathways <- rownames(keggres$greater)[1:5]
+keggresids = substr(keggrespathways, start=1, stop=8)
+keggresids
+pathview(gene.data=foldchanges, pathway.id=keggresids, species="hsa")
+```
+![](hsa04630.pathview.png)
+![](hsa00140.pathview.png)
+![](hsa04142.pathview.png)
+![](hsa04330.pathview.png)
+
+## Gene Ontology
+
+We can also do a similar procedure with gene ontology. Similar to above, **go.sets.hs** has all GO terms. **go.subs.hs** is a named list containing indexes for the BP, CC, and MF ontologies. Let’s focus on BP (Biological Process) here.
+```{r}
+data(go.sets.hs)
+data(go.subs.hs)
+
+# Focus on Biological Process subset of GO
+gobpsets = go.sets.hs[go.subs.hs$BP]
+
+gobpres = gage(foldchanges, gsets=gobpsets, same.dir=TRUE)
+lapply(gobpres, head)
+```
+
+## Reactome Analysis
+
+Output the list of significant genes at the 0.05 level as a plain text file.
+```{r}
+sig_genes <- res[res$padj <= 0.05 & !is.na(res$padj), "symbol"]
+print(paste("Total number of significant genes:", length(sig_genes)))
+write.table(sig_genes, file="significant_genes.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)
+```

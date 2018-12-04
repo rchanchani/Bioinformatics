@@ -1,0 +1,53 @@
+---
+title: "class14"
+author: "Raghav Chanchani"
+date: "11/15/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Gene Expression Analysis (of SNPs)
+## Asthma in People of Mexican Ancestry in Los Angeles, CA
+```{r}
+asthma <- read.csv("asthma.csv")
+```
+Focusing on the second column which shows the subjects' genotype... The genotype is formatted as the diploid alleles separated by "|". % different alleles are shown below.
+```{r warning=FALSE}
+genotypes <- round(table(asthma[,2]) / nrow(asthma) * 100, 2)
+```
+There are `r genotypes[1] `% people with the A|A genotype.
+
+## Interpreting Base Qualities
+```{r eval=FALSE, include=FALSE}
+#install.packages("seqinr")
+#install.packages("gtools")
+```
+```{r}
+library(seqinr)
+library(gtools)
+phred <- asc( s2c("DDDDCDEDCDDDDBBDDDCC@") ) - 33
+phred
+```
+
+## Expression Data Analysis
+```{r}
+expr <- read.table("rs8067378_ENSG00000172057.6")
+table(expr$geno)
+```
+```{r}
+inds.aa <- expr$geno =="A/A"
+summary(expr$exp[inds.aa])
+
+inds.ag <- expr$geno =="A/G"
+summary(expr$exp[inds.ag])
+
+inds.gg <- expr$geno =="G/G"
+summary(expr$exp[inds.gg])
+```
+```{r}
+library("ggplot2")
+boxplot(exp ~ geno, data=expr) 
+```
