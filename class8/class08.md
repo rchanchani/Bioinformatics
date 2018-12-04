@@ -51,7 +51,9 @@ plot(x, col = k$cluster, pch = 20)
 points(k$centers, col = "blue", pch = 20)
 ```
 
-![](class08_files/figure-markdown_github/unnamed-chunk-2-1.png) There are 30 points in each cluster. Cluster size is given by `k$size`, where k is the kmean object returned by kmeans. The points in each cluster are shown in `k$cluster`. Centers of the clusters are stored in `k$centers`.
+![](class08_files/figure-markdown_github/unnamed-chunk-2-1.png) 
+
+There are 30 points in each cluster. Cluster size is given by `k$size`, where k is the kmean object returned by kmeans. The points in each cluster are shown in `k$cluster`. Centers of the clusters are stored in `k$centers`.
 
 ``` r
 # Generate example data for clustering k = 3
