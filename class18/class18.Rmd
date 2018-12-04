@@ -1,0 +1,42 @@
+---
+title: "Designing a Personalized Cancer Vaccine"
+author: "Raghav Chanchani"
+date: "11/29/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load in the FASTA file showing healthy and tumor tissue sequences.
+```{r}
+library(bio3d)
+seqs <- read.fasta("lecture18_sequences.fa")
+```
+Find where the healthy and tumor sequences are mismatched. Where the output is not 1.0, the sequences differ.
+```{r}
+# find gaps
+gaps <- gap.inspect(seqs)
+# determine mismatches
+score <- conserv(seqs, method="identity")
+# get indexes
+mutant.inds <- which(score < 1)
+# differences (tumor-specific sites and gaps)
+#seqs$ali[, mutant.inds]
+# indeces of non-gap positions that include matching sequences
+#seqs$ali[, gaps$f.inds]
+```
+
+```{r}
+mutant.positions <- mutant.inds[mutant.inds %in% gaps$f.inds]
+```
+
+We want eight before and after these positions to determine sequences of interest.
+```{r}
+start.position <- mutant.positions - 8
+end.position <- mutant.positions + 8
+```
+```{r}
+seqs$ali[, start.position[1]:end.position[1]]
+```
