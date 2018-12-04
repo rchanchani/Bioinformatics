@@ -1,10 +1,7 @@
-class14
+Gene Expression Analysis (of SNPs)
 ================
 Raghav Chanchani
 11/15/2018
-
-Gene Expression Analysis (of SNPs)
-==================================
 
 Asthma in People of Mexican Ancestry in Los Angeles, CA
 -------------------------------------------------------
