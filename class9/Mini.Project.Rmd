@@ -2,7 +2,7 @@
 title: "Unsupervised Learning Analysis of Cancer Cells"
 author: "Raghav Chanchani"
 date: "10/30/2018"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
