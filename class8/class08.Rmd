@@ -1,5 +1,5 @@
 ---
-title: "Class 8"
+title: "Overview of Machine Learning"
 author: "Raghav Chanchani"
 date: "10/25/2018"
 output: github_document
