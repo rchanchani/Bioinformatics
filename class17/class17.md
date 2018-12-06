@@ -271,7 +271,7 @@ dev.off()
     ## null device 
     ##           1
 
-Oncostrip and Lolipop Plots
+Oncostrip and Lollipop Plots
 ---------------------------
 
 We can visualize any set of genes using the **oncostrip()** function, which draws mutations in each sample similar to the graphic on the NCI-GDC web portal. Note that oncostrip() can be used to draw any number of genes using the input top or genes arguments. We look at KRAS and TP53 genes because they appear to be significant locations of mutations.
