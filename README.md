@@ -1,5 +1,5 @@
 # Bioinformatics
-Bioinformatics projects in R from BIMM 143 at UC San Diego. Course includes projects from cancer genomics through unsupervised machine learning.
+Bioinformatics projects in R from BIMM 143 at UC San Diego. This set ncludes projects from cancer genomics through unsupervised machine learning.
 
 Class List:
 - [Data Visualization](https://github.com/rchanchani/Bioinformatics/blob/master/class5/class5.md)
