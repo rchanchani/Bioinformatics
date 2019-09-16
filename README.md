@@ -1,7 +1,7 @@
 # Bioinformatics
 Bioinformatics projects in R. This set includes projects from cancer genomics, pathway analysis from RNA-Seq, and Structural Bioinformatics.
 
-Class List:
+Topics:
 - [Data Visualization](https://github.com/rchanchani/Bioinformatics/blob/master/class5/class5.md)
 - [Protein Database Plot (pdbPlot)](https://github.com/rchanchani/Bioinformatics/blob/master/class6/pdbPlot.md)
 - [Overview of Machine Learning Techniques](https://github.com/rchanchani/Bioinformatics/blob/master/class8/class08.md)
